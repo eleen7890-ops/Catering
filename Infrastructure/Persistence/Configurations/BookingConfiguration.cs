@@ -16,6 +16,7 @@ public sealed class BookingConfiguration : IEntityTypeConfiguration<Booking>
         builder.Property(booking => booking.CustomerEmail).IsRequired().HasMaxLength(256);
         builder.Property(booking => booking.CustomerPhone).IsRequired().HasMaxLength(40);
         builder.Property(booking => booking.EventType).HasConversion<string>().HasMaxLength(30);
+        builder.Property(booking => booking.CuratedMenuName).HasMaxLength(150);
         builder.Property(booking => booking.CakeDescription).HasMaxLength(1000);
         builder.Property(booking => booking.CakeImageContentType).HasMaxLength(30).IsUnicode(false);
         builder.Property(booking => booking.CakeImageData).HasColumnType("varbinary(max)");

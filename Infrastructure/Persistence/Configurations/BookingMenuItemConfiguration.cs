@@ -13,7 +13,7 @@ public sealed class BookingMenuItemConfiguration : IEntityTypeConfiguration<Book
         builder.Property(item => item.Name).IsRequired().HasMaxLength(150);
         builder.Property(item => item.Category).HasConversion<string>().HasMaxLength(20);
         builder.Property(item => item.PricePerGuest).HasPrecision(18, 2);
-        // MenuItemId is a historical reference, not a foreign key: deleting a catalog item
-        // must not remove or change an existing booking's price snapshot.
+        // MenuItemId is a historical dish reference, not a foreign key. Deleting an
+        // old catalog item or curated menu must not change a booking snapshot.
     }
 }

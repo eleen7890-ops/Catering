@@ -5,39 +5,28 @@ using Domain;
 
 namespace Application.Bookings;
 
-public sealed class BookingService
+public sealed class BookingService(
+    CuratedMenuService menus,
+    IBookingRepository bookings,
+    BookingPricingPolicy pricing,
+    TimeProvider clock)
 {
-    private readonly MenuRecommendationService _recommendations;
-    private readonly IBookingRepository _bookings;
-    private readonly BookingPricingPolicy _pricing;
-    private readonly TimeProvider _clock;
-
-    public BookingService(MenuRecommendationService recommendations, IBookingRepository bookings,
-        BookingPricingPolicy pricing, TimeProvider clock)
-    {
-        _recommendations = recommendations ?? throw new ArgumentNullException(nameof(recommendations));
-        _bookings = bookings ?? throw new ArgumentNullException(nameof(bookings));
-        _pricing = pricing ?? throw new ArgumentNullException(nameof(pricing));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-    }
-
-    // Returns null when no complete menu fits the customer's preferences and budget.
+    // A missing or unpublished menu cannot be booked.
     public async Task<BookingReceipt?> CreateAsync(BookingRequest request, string? customerId,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         Validate(request, customerId);
-
-        // Recalculate from the current catalog; a browser-supplied price is never trusted.
-        var menu = await _recommendations.RecommendAsync(request.Preferences, cancellationToken);
+        var menu = await menus.GetPublishedAsync(request.MenuId, cancellationToken);
         if (menu is null) return null;
+        if (request.GuestCount < menu.MinimumGuests || request.GuestCount > menu.MaximumGuests)
+            throw new ArgumentException($"Choose between {menu.MinimumGuests} and {menu.MaximumGuests} guests for this menu.");
 
         var completedBookings = customerId is null ? 0 :
-            await _bookings.CountCompletedForCustomerAsync(customerId, cancellationToken);
-        var foodTotal = menu.EstimatedFoodTotal;
-        var deliveryFee = _pricing.DeliveryFee(request.FulfillmentMethod, menu.Currency);
-        var discount = _pricing.Discount(foodTotal, completedBookings, customerId is not null);
-
+            await bookings.CountCompletedForCustomerAsync(customerId, cancellationToken);
+        var foodTotal = menu.PriceJod;
+        var deliveryFee = pricing.DeliveryFee(request.FulfillmentMethod, "JOD");
+        var discount = pricing.Discount(foodTotal, completedBookings, customerId is not null);
         var bookingId = Guid.NewGuid();
         var booking = new Booking
         {
@@ -48,19 +37,21 @@ public sealed class BookingService
                 ? email.Address : request.CustomerEmail.Trim(),
             CustomerPhone = request.CustomerPhone.Trim(),
             EventDate = request.EventDate,
-            CreatedAt = _clock.GetUtcNow(),
-            EventType = request.Preferences.EventType,
-            CakeDescription = request.Preferences.EventType == EventType.Birthday
+            CreatedAt = clock.GetUtcNow(),
+            EventType = request.EventType,
+            CuratedMenuId = menu.Id,
+            CuratedMenuName = menu.Name,
+            CakeDescription = request.EventType == EventType.Birthday
                 ? request.CakeDescription?.Trim() : null,
             CakeImageContentType = request.CakeImage?.ContentType,
             CakeImageData = request.CakeImage?.Data.ToArray(),
-            Cuisine = request.Preferences.Cuisine,
-            DietaryPreference = request.Preferences.DietaryPreference,
-            Taste = request.Preferences.Taste,
-            Mood = request.Preferences.Mood,
-            GuestCount = menu.GuestCount,
-            BudgetPerGuest = request.Preferences.BudgetPerGuest,
-            Currency = menu.Currency,
+            Cuisine = menu.Cuisine,
+            DietaryPreference = request.DietaryPreference,
+            Taste = request.Taste,
+            Mood = menu.Vibe,
+            GuestCount = request.GuestCount,
+            BudgetPerGuest = decimal.Round(menu.PriceJod / request.GuestCount, 2),
+            Currency = "JOD",
             FulfillmentMethod = request.FulfillmentMethod,
             DeliveryAddress = request.FulfillmentMethod == FulfillmentMethod.Delivery
                 ? request.DeliveryAddress!.Trim() : null,
@@ -69,45 +60,38 @@ public sealed class BookingService
             DiscountAmount = discount,
             GrandTotal = foodTotal + deliveryFee - discount,
             Status = BookingStatus.Requested,
-            MenuItems =
-            [
-                Snapshot(menu.Main, bookingId),
-                Snapshot(menu.Side, bookingId),
-                Snapshot(menu.Dessert, bookingId)
-            ]
+            MenuItems = menu.Dishes.Select(dish => new BookingMenuItem
+            {
+                Id = Guid.NewGuid(),
+                BookingId = bookingId,
+                MenuItemId = dish.Id,
+                Name = dish.Name,
+                Category = dish.Category,
+                PricePerGuest = 0
+            }).ToList()
         };
-
-        await _bookings.AddAsync(booking, cancellationToken);
+        await bookings.AddAsync(booking, cancellationToken);
         return new BookingReceipt(booking.Id, booking.Status, booking.FoodTotal,
             booking.DeliveryFee, booking.DiscountAmount, booking.GrandTotal, booking.Currency);
     }
 
-    private static BookingMenuItem Snapshot(SuggestedMenuItem item, Guid bookingId) => new()
-    {
-        Id = Guid.NewGuid(),
-        BookingId = bookingId,
-        MenuItemId = item.Id,
-        Name = item.Name,
-        Category = item.Category,
-        PricePerGuest = item.PricePerGuest
-    };
-
     private void Validate(BookingRequest request, string? customerId)
     {
-        if (request.Preferences is null)
-            throw new ArgumentException("Menu preferences are required.", nameof(request));
+        if (request.MenuId == Guid.Empty || request.GuestCount < 1 ||
+            !Enum.IsDefined(request.EventType) || !Enum.IsDefined(request.DietaryPreference) ||
+            !Enum.IsDefined(request.Taste))
+            throw new ArgumentException("Choose a menu and enter valid event details.", nameof(request));
         if (request.CakeDescription is { Length: > 1000 })
             throw new ArgumentException("Cake description cannot exceed 1000 characters.", nameof(request));
-        if (request.Preferences.EventType != EventType.Birthday &&
+        if (request.EventType != EventType.Birthday &&
             (!string.IsNullOrWhiteSpace(request.CakeDescription) || request.CakeImage is not null))
             throw new ArgumentException("Cake details are only available for birthdays.", nameof(request));
-        if (request.CakeImage is not null)
-            ValidateCakeImage(request.CakeImage);
+        if (request.CakeImage is not null) ValidateCakeImage(request.CakeImage);
         if (string.IsNullOrWhiteSpace(request.CustomerName) ||
             string.IsNullOrWhiteSpace(request.CustomerPhone) ||
             !MailAddress.TryCreate(request.CustomerEmail, out _))
             throw new ArgumentException("Valid customer contact details are required.", nameof(request));
-        if (request.EventDate <= _clock.GetUtcNow())
+        if (request.EventDate <= clock.GetUtcNow())
             throw new ArgumentException("The event date must be in the future.", nameof(request));
         if (!Enum.IsDefined(request.FulfillmentMethod))
             throw new ArgumentException("The fulfillment method is invalid.", nameof(request));
@@ -123,7 +107,6 @@ public sealed class BookingService
         const int maxImageBytes = 5 * 1024 * 1024;
         if (image.Data is null || image.Data.Length == 0 || image.Data.Length > maxImageBytes)
             throw new ArgumentException("Cake image must be between 1 byte and 5 MB.", nameof(image));
-
         var data = image.Data;
         var valid = image.ContentType switch
         {

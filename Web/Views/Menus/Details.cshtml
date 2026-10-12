@@ -1,0 +1,13 @@
+@model Application.Menus.CuratedMenuView
+@{ ViewData["Title"] = Model.Name; }
+<nav aria-label="Breadcrumb" class="menu-breadcrumb"><a asp-action="Index">All menus</a><span aria-hidden="true"> / </span><span>@Model.Name</span></nav>
+<article class="menu-detail">
+    <div class="menu-detail-image"><img src="@Model.ImagePath" alt="@Model.Name catering spread" /></div>
+    <div class="menu-detail-copy"><p class="eyebrow">@Model.Cuisine · @Model.Vibe · @Model.Event</p><h1>@Model.Name</h1><p class="menu-detail-description">@Model.Description</p><div class="menu-facts"><span><strong>@Model.PriceJod.ToString("0.00") JOD</strong><small>menu price</small></span><span><strong>@Model.MinimumGuests–@Model.MaximumGuests</strong><small>guests served</small></span></div><a class="btn btn-olive" asp-controller="Bookings" asp-action="Create" asp-route-menuId="@Model.Id">Request a booking ↗</a></div>
+</article>
+<section class="included-dishes" aria-labelledby="included-title"><p class="eyebrow">ALL ON THE TABLE</p><h2 id="included-title">What’s included</h2><div class="included-dish-grid">
+@foreach (var dish in Model.Dishes)
+{
+    <div class="included-dish"><span>@dish.Category</span><h3>@dish.Name</h3><p>@dish.ServingDescription</p></div>
+}
+</div></section>

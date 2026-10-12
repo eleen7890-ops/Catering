@@ -2,28 +2,34 @@
 @using Domain
 @{
     ViewData["Title"] = "Plan your event";
+    var availableMenus = ViewData["AvailableMenus"] as IReadOnlyList<Application.Menus.CuratedMenuView>
+        ?? Array.Empty<Application.Menus.CuratedMenuView>();
 }
 
 <div class="page-heading">
     <p class="eyebrow">Catering request</p>
     <h1>Plan your event</h1>
-    <p>Tell us what you need. We will choose a menu that fits your preferences and food budget.</p>
+    <p>Choose one of our curated menus and tell us when and where to bring it.</p>
 </div>
+
+@if (availableMenus.Count == 0)
+{
+    <div class="menu-empty" role="status"><h2>@(ViewData["CatalogUnavailable"] is true ? "Menus are temporarily unavailable" : "No menus available yet")</h2><p>@(ViewData["CatalogUnavailable"] is true ? "We could not connect to the menu catalog. Please try again shortly." : "Our curated collection is coming soon. Please check back later.")</p><a asp-controller="Menus" asp-action="Index">Explore menus</a></div>
+}
+else
+{
 
 <form asp-action="Create" method="post" enctype="multipart/form-data" class="booking-form">
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <fieldset>
-        <legend>Event and menu</legend>
+        <legend>Your menu and event</legend>
         <div class="form-grid">
+            <div><label asp-for="MenuId">Curated menu</label><select asp-for="MenuId"><option value="">Choose a menu</option>@foreach (var menu in availableMenus) { <option value="@menu.Id">@menu.Name — @menu.PriceJod.ToString("0.00") JOD, @menu.MinimumGuests–@menu.MaximumGuests guests</option> }</select><span asp-validation-for="MenuId"></span></div>
             <div><label asp-for="EventType">Event type</label><select asp-for="EventType" asp-items="Html.GetEnumSelectList<EventType>()"></select></div>
             <div><label asp-for="EventDate">Event date and time</label><input asp-for="EventDate" type="datetime-local" /><span asp-validation-for="EventDate"></span></div>
-            <div><label asp-for="Cuisine"></label><select asp-for="Cuisine" asp-items="Html.GetEnumSelectList<Cuisine>()"></select></div>
             <div><label asp-for="DietaryPreference">Diet</label><select asp-for="DietaryPreference" asp-items="Html.GetEnumSelectList<DietaryPreference>()"></select></div>
             <div><label asp-for="Taste"></label><select asp-for="Taste" asp-items="Html.GetEnumSelectList<TastePreference>()"></select></div>
-            <div><label asp-for="Mood"></label><select asp-for="Mood" asp-items="Html.GetEnumSelectList<Mood>()"></select></div>
             <div><label asp-for="GuestCount">Guests</label><input asp-for="GuestCount" type="number" min="1" /><span asp-validation-for="GuestCount"></span></div>
-            <div><label asp-for="BudgetPerGuest">Food budget per guest</label><input asp-for="BudgetPerGuest" type="number" min="0.01" step="0.01" /><span asp-validation-for="BudgetPerGuest"></span></div>
-            <div><label asp-for="Currency"></label><input asp-for="Currency" maxlength="3" /><span asp-validation-for="Currency"></span></div>
         </div>
     </fieldset>
 
@@ -52,6 +58,7 @@
     <input asp-for="TimezoneOffsetMinutes" type="hidden" />
     <button type="submit" class="btn btn-primary">Request booking</button>
 </form>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -67,9 +74,11 @@
             document.getElementById('delivery-fields').hidden = !delivery;
             document.getElementById('DeliveryAddress').disabled = !delivery;
         };
-        eventType.addEventListener('change', updateFields);
-        fulfillment.addEventListener('change', updateFields);
-        document.getElementById('TimezoneOffsetMinutes').value = new Date().getTimezoneOffset();
-        updateFields();
+        if (eventType && fulfillment) {
+            eventType.addEventListener('change', updateFields);
+            fulfillment.addEventListener('change', updateFields);
+            document.getElementById('TimezoneOffsetMinutes').value = new Date().getTimezoneOffset();
+            updateFields();
+        }
     </script>
 }

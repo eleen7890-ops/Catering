@@ -7,6 +7,8 @@ namespace Infrastructure.Persistence;
 public sealed class CateringDbContext(DbContextOptions<CateringDbContext> options) : IdentityDbContext(options)
 {
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+    public DbSet<CuratedMenu> CuratedMenus => Set<CuratedMenu>();
+    public DbSet<CuratedMenuDish> CuratedMenuDishes => Set<CuratedMenuDish>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<BookingMenuItem> BookingMenuItems => Set<BookingMenuItem>();
 

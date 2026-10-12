@@ -3,4 +3,4 @@ using Application.Menus;
 
 namespace Web.Models;
 
-public sealed record BookingConfirmation(BookingReceipt Receipt, MenuSuggestion Menu);
+public sealed record BookingConfirmation(BookingReceipt Receipt, CuratedMenuView Menu);

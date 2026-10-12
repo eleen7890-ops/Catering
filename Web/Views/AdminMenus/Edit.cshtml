@@ -1,0 +1,59 @@
+@model MenuEditorForm
+@using Domain
+@{
+    var isEdit = ViewData["MenuId"] is Guid;
+    var menuId = isEdit ? (Guid)ViewData["MenuId"]! : Guid.Empty;
+    ViewData["Title"] = isEdit ? "Edit menu" : "Create menu";
+}
+<div class="admin-heading"><div><p class="eyebrow">GATHER ADMIN</p><h1>@(isEdit ? "Edit menu" : "Create a menu")</h1><p>Choose the whole spread, its guest range, and exactly what is served.</p></div><a asp-action="Index">Back to menus</a></div>
+@if (TempData["MenuNotice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
+<form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? menuId : null)" method="post" class="admin-menu-form">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <fieldset><legend>Menu details</legend><div class="form-grid">
+        <div><label asp-for="Name"></label><input asp-for="Name" maxlength="150" /><span asp-validation-for="Name"></span></div>
+        <div><label asp-for="ImagePath">Image path</label><input asp-for="ImagePath" placeholder="/images/japanese-night.jpg" maxlength="500" /><span asp-validation-for="ImagePath"></span><small>Place the image in Web/wwwroot/images first.</small></div>
+        <div class="form-full"><label asp-for="Description"></label><textarea asp-for="Description" rows="4" maxlength="1500"></textarea><span asp-validation-for="Description"></span></div>
+        <div><label asp-for="PriceJod">Menu price (JOD)</label><input asp-for="PriceJod" type="number" min="0.01" step="0.01" /><span asp-validation-for="PriceJod"></span></div>
+        <div><label asp-for="MinimumGuests">Minimum guests</label><input asp-for="MinimumGuests" type="number" min="1" /><span asp-validation-for="MinimumGuests"></span></div>
+        <div><label asp-for="MaximumGuests">Maximum guests</label><input asp-for="MaximumGuests" type="number" min="1" /><span asp-validation-for="MaximumGuests"></span></div>
+        <div><label asp-for="Cuisine"></label><select asp-for="Cuisine" asp-items="Html.GetEnumSelectList<Cuisine>()"></select><span asp-validation-for="Cuisine"></span></div>
+        <div><label asp-for="Vibe"></label><select asp-for="Vibe" asp-items="Html.GetEnumSelectList<Mood>()"></select><span asp-validation-for="Vibe"></span></div>
+        <div><label asp-for="Event"></label><select asp-for="Event" asp-items="Html.GetEnumSelectList<EventType>()"></select><span asp-validation-for="Event"></span></div>
+    </div><label class="checkbox"><input asp-for="IsPublished" /> Publish this menu for customers</label></fieldset>
+    <fieldset><legend>Included dishes</legend><p>Use a serving description such as “2 platters, serves 10”. The menu price covers the complete spread.</p><span asp-validation-for="Dishes"></span><div id="dishRows">
+        @for (var i = 0; i < Model.Dishes.Count; i++)
+        {
+            <div class="dish-editor-row" data-dish-row><div><label asp-for="Dishes[i].Name">Dish name</label><input asp-for="Dishes[i].Name" maxlength="150" /><span asp-validation-for="Dishes[i].Name"></span></div><div><label asp-for="Dishes[i].ServingDescription">Serving quantity</label><input asp-for="Dishes[i].ServingDescription" maxlength="120" /><span asp-validation-for="Dishes[i].ServingDescription"></span></div><div><label asp-for="Dishes[i].Category"></label><select asp-for="Dishes[i].Category" asp-items="Html.GetEnumSelectList<MenuCategory>()"></select></div><button type="button" class="btn btn-outline-danger remove-dish">Remove</button></div>
+        }
+    </div><button type="button" id="addDish" class="btn btn-outline-dark">Add another dish</button></fieldset>
+    <button type="submit" class="btn btn-olive">@(isEdit ? "Save changes" : "Create menu")</button>
+</form>
+@if (isEdit)
+{
+    <form asp-action="Delete" asp-route-id="@menuId" method="post" class="delete-menu-form" onsubmit="return confirm('Delete this menu and its dishes?');"><button type="submit" class="btn btn-outline-danger">Delete menu</button></form>
+}
+<template id="dishTemplate"><div class="dish-editor-row" data-dish-row><div><label for="Dishes___index___Name">Dish name</label><input id="Dishes___index___Name" name="Dishes[__index__].Name" maxlength="150" required /></div><div><label for="Dishes___index___ServingDescription">Serving quantity</label><input id="Dishes___index___ServingDescription" name="Dishes[__index__].ServingDescription" maxlength="120" required /></div><div><label for="Dishes___index___Category">Category</label><select id="Dishes___index___Category" name="Dishes[__index__].Category"><option value="0">Main</option><option value="1">Side</option><option value="2">Dessert</option></select></div><button type="button" class="btn btn-outline-danger remove-dish">Remove</button></div></template>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const rows = document.getElementById('dishRows');
+        function renumberDishes() {
+            rows.querySelectorAll('[data-dish-row]').forEach((row, index) => {
+                row.querySelectorAll('[name]').forEach(field => field.name = field.name.replace(/Dishes\[\d+\]/, `Dishes[${index}]`));
+                row.querySelectorAll('[id]').forEach(field => field.id = field.id.replace(/Dishes_\d+__/, `Dishes_${index}__`));
+                row.querySelectorAll('label[for]').forEach(label => label.htmlFor = label.htmlFor.replace(/Dishes_\d+__/, `Dishes_${index}__`));
+            });
+        }
+        document.getElementById('addDish').addEventListener('click', () => {
+            const index = rows.querySelectorAll('[data-dish-row]').length;
+            rows.insertAdjacentHTML('beforeend', document.getElementById('dishTemplate').innerHTML.replaceAll('__index__', index));
+            rows.lastElementChild.querySelector('input').focus();
+        });
+        rows.addEventListener('click', event => {
+            if (event.target.closest('.remove-dish')) {
+                event.target.closest('[data-dish-row]').remove();
+                renumberDishes();
+            }
+        });
+    </script>
+}

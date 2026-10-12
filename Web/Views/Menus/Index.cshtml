@@ -1,0 +1,31 @@
+@model MenuListViewModel
+@using Domain
+@{ ViewData["Title"] = "Explore menus"; }
+<div class="page-heading menu-page-heading"><p class="eyebrow">THE GATHER COLLECTION</p><h1>Find your kind of <em>feast.</em></h1><p>Complete menus, thoughtfully chosen by our team. Find one that fits your people and your plans.</p></div>
+<form asp-action="Index" method="get" class="menu-filters" aria-label="Filter menus">
+    <div><label for="cuisine">Cuisine</label><select id="cuisine" name="cuisine"><option value="">All cuisines</option>@foreach (var value in Enum.GetValues<Cuisine>()) { <option value="@value" selected="@(Model.Cuisine == value)">@value</option> }</select></div>
+    <div><label for="vibe">Vibe</label><select id="vibe" name="vibe"><option value="">All vibes</option>@foreach (var value in Enum.GetValues<Mood>()) { <option value="@value" selected="@(Model.Vibe == value)">@value</option> }</select></div>
+    <div><label for="eventType">Event</label><select id="eventType" name="eventType"><option value="">All events</option>@foreach (var value in Enum.GetValues<EventType>()) { <option value="@value" selected="@(Model.Event == value)">@value</option> }</select></div>
+    <button class="btn btn-olive" type="submit">Apply filters</button><a asp-action="Index" class="filter-reset">Clear</a>
+</form>
+@if (!Model.CatalogUnavailable)
+{
+    <p class="menu-results-count" role="status">@Model.Menus.Count @(Model.Menus.Count == 1 ? "menu" : "menus") found</p>
+}
+@if (Model.CatalogUnavailable)
+{
+    <div class="menu-empty" role="status"><h2>Menus are temporarily unavailable</h2><p>We could not connect to the menu catalog. Please try again shortly.</p></div>
+}
+else if (Model.Menus.Count == 0)
+{
+    <div class="menu-empty"><h2>No menus found</h2><p>Try another cuisine, vibe, or event. New menus are added by Gather.</p><a class="btn btn-olive" asp-action="Index">See all menus</a></div>
+}
+else
+{
+    <div class="package-grid browse-grid">
+    @foreach (var menu in Model.Menus)
+    {
+        <article class="package-card"><div class="package-image-wrap"><img src="@menu.ImagePath" alt="@menu.Name catering spread" loading="lazy" /><span class="package-badge">@menu.Cuisine</span></div><div class="package-body"><div class="package-title-row"><h2>@menu.Name</h2><span class="package-price">Menu price <strong>@menu.PriceJod.ToString("0.00") JOD</strong></span></div><p>@menu.Description</p><p class="package-dishes">@string.Join(" · ", menu.Dishes.Select(dish => dish.Name))</p><div class="package-bottom"><span>Serves @menu.MinimumGuests–@menu.MaximumGuests guests</span><a asp-action="Details" asp-route-id="@menu.Id">View menu ↗</a></div></div></article>
+    }
+    </div>
+}

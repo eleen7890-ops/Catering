@@ -8,11 +8,12 @@
     <p>Your booking reference is <strong>@Model.Receipt.BookingId</strong>. We will contact you to confirm the details.</p>
 </div>
 <section class="card-panel">
-    <h2>Your suggested menu</h2>
+    <h2>@Model.Menu.Name</h2>
     <ul class="menu-list">
-        <li><strong>Main:</strong> @Model.Menu.Main.Name</li>
-        <li><strong>Side:</strong> @Model.Menu.Side.Name</li>
-        <li><strong>Dessert:</strong> @Model.Menu.Dessert.Name</li>
+        @foreach (var dish in Model.Menu.Dishes)
+        {
+            <li><strong>@dish.Category:</strong> @dish.Name — @dish.ServingDescription</li>
+        }
     </ul>
     <p>Food: @Model.Receipt.FoodTotal.ToString("N2") @Model.Receipt.Currency</p>
     <p>Delivery: @Model.Receipt.DeliveryFee.ToString("N2") @Model.Receipt.Currency</p>

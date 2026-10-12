@@ -10,6 +10,9 @@ public sealed class AccountController(
     SignInManager<IdentityUser> signIn) : Controller
 {
     [HttpGet]
+    public IActionResult AccessDenied() => View();
+
+    [HttpGet]
     public IActionResult Register() => View(new RegisterForm());
 
     [HttpPost, ValidateAntiForgeryToken]

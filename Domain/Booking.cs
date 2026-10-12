@@ -10,6 +10,8 @@ public class Booking
     public DateTimeOffset EventDate { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public EventType EventType { get; set; }
+    public Guid? CuratedMenuId { get; set; }
+    public string? CuratedMenuName { get; set; }
     public string? CakeDescription { get; set; }
     public string? CakeImageContentType { get; set; }
     public byte[]? CakeImageData { get; set; }

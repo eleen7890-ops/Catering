@@ -15,7 +15,7 @@ public static class DependencyInjection
             throw new ArgumentException("A SQL Server connection string is required.", nameof(connectionString));
 
         services.AddDbContext<CateringDbContext>(options => options.UseSqlServer(connectionString));
-        services.AddScoped<IMenuItemRepository, EfMenuItemRepository>();
+        services.AddScoped<ICuratedMenuRepository, EfCuratedMenuRepository>();
         services.AddScoped<IBookingRepository, EfBookingRepository>();
         services.AddIdentity<IdentityUser, IdentityRole>(options =>
             options.User.RequireUniqueEmail = true)

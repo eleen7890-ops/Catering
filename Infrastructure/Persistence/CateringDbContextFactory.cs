@@ -8,7 +8,7 @@ public sealed class CateringDbContextFactory : IDesignTimeDbContextFactory<Cater
     public CateringDbContext CreateDbContext(string[] args)
     {
         var connectionString = Environment.GetEnvironmentVariable("CATERING_CONNECTION_STRING")
-            ?? @"Server=DESKTOP-85J3V31;Database=CateringDevelopment;Trusted_Connection=True;TrustServerCertificate=True";
+            ?? @"Server=DESKTOP-85J3V31;Database=CateringDevelopment;Trusted_Connection=True;TrustServerCertificate=True;Encrypt=False";
         var options = new DbContextOptionsBuilder<CateringDbContext>()
             .UseSqlServer(connectionString)
             .Options;

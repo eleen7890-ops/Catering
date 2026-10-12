@@ -1,7 +1,7 @@
 namespace Domain;
 
 public enum EventType { Wedding, Corporate, Birthday, PrivateGathering, Other }
-public enum Cuisine { Mediterranean, Italian, MiddleEastern, Asian, International }
+public enum Cuisine { Mediterranean, Italian, MiddleEastern, Asian, International, Japanese, American }
 public enum DietaryPreference { Any, Vegetarian, Vegan }
 public enum DietarySuitability { ContainsMeat, Vegetarian, Vegan }
 public enum TastePreference { Balanced, Savory, Spicy, Sweet, Fresh }

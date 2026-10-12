@@ -1,15 +1,65 @@
-@{ ViewData["Title"] = "Catering for your celebration"; }
-<section class="hero">
-    <div>
-        <p class="eyebrow">Made for gathering</p>
-        <h1>A menu that feels like your event.</h1>
-        <p>Plan a wedding, birthday, company event, or private gathering. Share your tastes and budget, and we will suggest a complete menu.</p>
-        <a class="btn btn-primary" asp-controller="Bookings" asp-action="Create">Plan an event</a>
+@model HomePageViewModel
+@{ ViewData["Title"] = "Food for the moments that matter"; }
+
+<section class="home-hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+        <p class="eyebrow"><span class="tiny-star" aria-hidden="true">✳</span> CATERING, WITH FEELING</p>
+        <h1 id="hero-title">Good food.<br />Your people.<br /><em>Your vibe.</em></h1>
+        <p class="hero-intro">The best memories start with a full table. Tell us what you’re celebrating, and we’ll help you make it delicious.</p>
+        <div class="hero-actions"><a class="btn btn-olive btn-large" asp-controller="Bookings" asp-action="Create">Plan your gathering <span aria-hidden="true">↗</span></a><a class="underlined-link" href="#packages">Explore packages <span aria-hidden="true">↗</span></a></div>
+        <div class="hero-note"><span class="note-flower" aria-hidden="true">✳</span><span>Made for every kind<br />of get-together.</span></div>
     </div>
-    <div class="hero-art" aria-hidden="true"><span>Gather<br />& celebrate</span></div>
+    <div class="hero-photo-wrap"><img src="~/images/gather-hero.jpg" alt="Friends sharing a colorful catered meal around a sunlit table" class="hero-photo" fetchpriority="high" /><div class="hero-photo-label"><span>MAKE ROOM FOR</span><strong>one more.</strong></div></div>
 </section>
-<section class="features">
-    <div><h2>Built around your taste</h2><p>Choose a cuisine, dietary preference, and the mood you want to create.</p></div>
-    <div><h2>A clear budget</h2><p>Set a food budget per guest and see the total on your booking confirmation.</p></div>
-    <div><h2>Birthday details</h2><p>Describe a cake or upload a photo so we can understand your idea.</p></div>
+
+<section class="occasion-section section-pad" aria-labelledby="occasion-title">
+    <div class="section-header"><div><p class="eyebrow">WHATEVER THE OCCASION</p><h2 id="occasion-title">A reason to <em>gather.</em></h2></div><p>Big plans, little plans, and everything in between. There’s always a reason to eat well together.</p></div>
+    <div class="occasion-grid">
+        @foreach (var occasion in Model.Occasions)
+        {
+            <a class="occasion-card occasion-@occasion.Style" asp-controller="Menus" asp-action="Index" asp-route-vibe="@occasion.Vibe" asp-route-eventType="@occasion.Event" aria-label="Explore menus for @occasion.Name"><span class="occasion-eyebrow">@occasion.Eyebrow</span><span class="occasion-art" aria-hidden="true">✳</span><span class="occasion-name">@occasion.Name</span><span class="occasion-description">@occasion.Description</span><span class="occasion-arrow" aria-hidden="true">↗</span></a>
+        }
+    </div>
 </section>
+
+<section class="packages-section section-pad" id="packages" aria-labelledby="packages-title">
+    <div class="section-header"><div><p class="eyebrow">GOOD THINGS, ALL TOGETHER</p><h2 id="packages-title">The crowd <em>favorites.</em></h2></div><p>Thoughtful spreads for easy hosting. Find the complete menu that fits your occasion.</p></div>
+    <div class="package-grid">
+        @if (Model.CatalogUnavailable)
+        {
+            <div class="menu-empty" role="status"><h3>Menus are temporarily unavailable.</h3><p>We could not connect to the menu catalog. Please try again shortly.</p></div>
+        }
+        else if (Model.Packages.Count == 0)
+        {
+            <div class="menu-empty"><h3>Good things are cooking.</h3><p>Our curated menus will appear here as soon as they are ready.</p><a asp-controller="Menus" asp-action="Index">Browse all menus</a></div>
+        }
+        @foreach (var package in Model.Packages)
+        {
+            <article class="package-card"><div class="package-image-wrap"><img src="@package.ImagePath" alt="@package.ImageAlt" loading="lazy" /><span class="package-badge">@package.Badge</span></div><div class="package-body"><div class="package-title-row"><h3>@package.Name</h3><span class="package-price">Menu price <strong>@package.PriceJod.ToString("0.00") JOD</strong></span></div><p>@package.Description</p><p class="package-dishes">@string.Join(" · ", package.IncludedDishes)</p><div class="package-bottom"><span><span aria-hidden="true">✳</span> Serves @package.MinimumGuests–@package.MaximumGuests guests</span><a asp-controller="Menus" asp-action="Details" asp-route-id="@package.Id" aria-label="View @package.Name details">View menu <span aria-hidden="true">↗</span></a></div></div></article>
+        }
+    </div>
+    <p class="package-disclaimer">Menus and prices are curated by Gather. Booking details are confirmed before your event.</p>
+</section>
+
+<section class="menu-teaser section-pad" id="menu-preview" aria-labelledby="menu-title"><div class="menu-teaser-copy"><p class="eyebrow">FROM OUR KITCHEN TO YOUR TABLE</p><h2 id="menu-title">A little taste of <em>everything.</em></h2><p>Explore complete menus made for sharing, each with its own character and carefully chosen dishes.</p><a class="btn btn-cream" asp-controller="Menus" asp-action="Index">Explore menus <span aria-hidden="true">↗</span></a></div><div class="menu-teaser-items" aria-label="Featured menu dishes">
+@{ var teaserDishes = Model.Packages.SelectMany(package => package.IncludedDishes).Take(3).ToArray(); }
+@if (Model.CatalogUnavailable)
+{
+    <p>Our menu catalog is temporarily unavailable.</p>
+}
+else if (teaserDishes.Length == 0)
+{
+    <p>New dishes are coming to the table soon.</p>
+}
+else
+{
+    for (var index = 0; index < teaserDishes.Length; index++)
+    {
+        <span>@((index + 1).ToString("00")) <strong>@teaserDishes[index]</strong></span>
+    }
+}
+</div></section>
+
+<section class="how-section section-pad" aria-labelledby="how-title"><div class="section-header"><div><p class="eyebrow">KEEP IT SIMPLE</p><h2 id="how-title">Gathering made <em>easy.</em></h2></div><p>We’ll help you go from “we should get together” to “pass me another plate.”</p></div><div class="how-grid"><div><span class="step-number">01</span><h3>Tell us your vibe</h3><p>Browse by cuisine, mood, or occasion.</p></div><div><span class="step-number">02</span><h3>Find your feast</h3><p>See exactly which dishes your chosen complete menu includes.</p></div><div><span class="step-number">03</span><h3>Make it a date</h3><p>Send your event details and choose delivery or pickup.</p></div></div></section>
+
+<section class="closing-banner"><span class="closing-flower" aria-hidden="true">✳</span><p>YOUR TABLE IS WAITING</p><h2>Good things happen<br /><em>when we gather.</em></h2><a class="btn btn-olive btn-large" asp-controller="Bookings" asp-action="Create">Plan your gathering <span aria-hidden="true">↗</span></a></section>

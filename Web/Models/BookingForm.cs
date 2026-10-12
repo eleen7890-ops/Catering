@@ -6,20 +6,14 @@ namespace Web.Models;
 
 public sealed class BookingForm
 {
+    [Required]
+    public Guid? MenuId { get; set; }
     public EventType EventType { get; set; } = EventType.Birthday;
-    public Cuisine Cuisine { get; set; } = Cuisine.MiddleEastern;
     public DietaryPreference DietaryPreference { get; set; }
     public TastePreference Taste { get; set; }
-    public Mood Mood { get; set; }
 
     [Range(1, 10000)]
     public int GuestCount { get; set; } = 20;
-
-    [Range(typeof(decimal), "0.01", "1000000")]
-    public decimal BudgetPerGuest { get; set; } = 20;
-
-    [Required, StringLength(3, MinimumLength = 3)]
-    public string Currency { get; set; } = "JOD";
 
     [Required, StringLength(150)]
     public string CustomerName { get; set; } = string.Empty;

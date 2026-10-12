@@ -1,0 +1,17 @@
+@model IReadOnlyList<Application.Menus.CuratedMenuView>
+@{ ViewData["Title"] = "Manage menus"; }
+<div class="admin-heading"><div><p class="eyebrow">GATHER ADMIN</p><h1>Curated menus</h1><p>Create complete menus and choose exactly which dishes they include.</p></div><a class="btn btn-olive" asp-action="Create">Add a menu</a></div>
+@if (TempData["MenuNotice"] is string notice) { <div class="alert alert-success" role="status">@notice</div> }
+@if (Model.Count == 0)
+{
+    <div class="menu-empty"><h2>No menus yet</h2><p>Add your first complete menu to start building the collection.</p><a class="btn btn-olive" asp-action="Create">Create a menu</a></div>
+}
+else
+{
+    <div class="admin-menu-list">
+    @foreach (var menu in Model)
+    {
+        <div class="admin-menu-row"><img src="@menu.ImagePath" alt="" loading="lazy" /><div><h2>@menu.Name</h2><p>@menu.Cuisine · @menu.Vibe · @menu.Event · @menu.Dishes.Count dishes</p></div><span class="admin-status @(menu.IsPublished ? "published" : "")">@(menu.IsPublished ? "Published" : "Draft")</span><a class="btn btn-outline-dark" asp-action="Edit" asp-route-id="@menu.Id">Edit</a></div>
+    }
+    </div>
+}

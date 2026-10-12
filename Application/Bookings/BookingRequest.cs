@@ -1,10 +1,13 @@
-using Application.Menus;
 using Domain;
 
 namespace Application.Bookings;
 
 public sealed record BookingRequest(
-    MenuPreferences Preferences,
+    Guid MenuId,
+    EventType EventType,
+    DietaryPreference DietaryPreference,
+    TastePreference Taste,
+    int GuestCount,
     string CustomerName,
     string CustomerEmail,
     string CustomerPhone,

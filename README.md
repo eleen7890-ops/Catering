@@ -1,46 +1,44 @@
-# Catering solution
+# Gather catering
 
-This solution includes a catering booking website and its supporting layers.
+Gather is an ASP.NET Core MVC website backed by EF Core and SQL Server.
 
-## Current layers
+## Layers
 
-- **Domain** contains plain catering entities and enums. It has no project or EF Core dependency.
-- **Application** contains use cases, input and output records, and repository interfaces. It references Domain only.
-- **Infrastructure** implements those repository interfaces with EF Core and stores customer accounts with ASP.NET Core Identity. It references Application and Domain.
-- **Web** provides the MVC booking form, account pages, booking history, and birthday cake upload.
+- **Domain** holds plain menu, dish, booking, and account-related data types.
+- **Application** owns curated menu listing, filtering, publishing, validation, and booking rules. Repository interfaces live here.
+- **Infrastructure** implements repositories with EF Core and maps SQL Server tables.
+- **Web** contains controllers, Razor views, view models, CSS, and JavaScript. Controllers call Application services; they do not query the DbContext.
 
-`MenuRecommendationService` asks `IMenuItemRepository` for available dishes, then chooses a main, side, and dessert that match the requested diet, cuisine, and food budget. Taste, mood, and event type rank matching combinations. It returns `null` if no complete menu fits.
+Menus are complete, manually curated offerings. The site does not assemble a menu from individual dishes. A menu has one JOD price for its stated guest range and an ordered list of included dishes. Existing booking snapshots preserve the menu name, dish names, and amount charged when an order is placed.
 
-`BookingService` validates contact and delivery details, recalculates the current menu, applies `BookingPricingPolicy`, saves a price snapshot through `IBookingRepository`, and returns a receipt. A signed-in customer's ID is supplied by the caller; `null` represents guest checkout. The caller must obtain that ID from trusted authentication state, never a form field.
+## Apply migrations
 
-Birthday bookings can include an optional cake description and reference photo. The MVC form shows these fields for birthdays and passes the photo as `CakeImageUpload` on `BookingRequest`. The service accepts JPEG, PNG, or WebP files up to 5 MB and stores the bytes and content type with the booking. Cake details are rejected for other event types.
-
-`BookingHistoryService` lists a signed-in customer's bookings and saved menu items. Guest bookings are not automatically linked to accounts created later.
-
-## Pricing choices
-
-The requested budget is **per guest for food**. Delivery is added afterward. Loyalty discounts apply to the food subtotal and only to registered customers who already have the configured number of completed bookings. The threshold, rate, and delivery fees are constructor settings on `BookingPricingPolicy`; no business-specific amounts are hard-coded. Bookings store the prices and totals used when they were placed so later menu price changes do not rewrite history.
-
-## Database setup
-
-Infrastructure uses SQL Server. `CateringDbContext` maps the catalog, bookings, booking item snapshots, and Identity tables. The `InitialCreate` migration defines the schema. Its design-time factory reads `CATERING_CONNECTION_STRING`; if unset, it targets `DESKTOP-85J3V31` and the `CateringDevelopment` database with Windows authentication and `TrustServerCertificate=True`. No migration has been applied to a database yet.
-
-The EF Core SQL Server provider, Identity EF stores, and EF design package are referenced by `Infrastructure.csproj`. The generated idempotent SQL is in `Infrastructure/Persistence/Scripts/InitialCreate.sql`. To apply the migration with EF tooling once a working connection is available:
+Set `CATERING_CONNECTION_STRING` to a SQL Server connection string accessible from your machine. The design-time factory otherwise targets server `DESKTOP-85J3V31` and database `CateringDevelopment` with Windows authentication and `TrustServerCertificate=True`. The Web app also reads `ConnectionStrings:Catering` from its settings.
+If you use the `sa` account, put `User Id=sa;Password=...` in the environment variable instead of committing the password to a settings file.
 
 ```powershell
-dotnet ef database update --project Infrastructure/Infrastructure.csproj --startup-project Infrastructure/Infrastructure.csproj --context CateringDbContext --connection '<SQL Server connection string>'
-```
-
-The fallback connection uses the Windows identity of the process running EF tools. It does not use the SQL Server `sa` account. To use `sa`, supply a full SQL authentication connection string through `CATERING_CONNECTION_STRING` and keep the password outside tracked files.
-
-The MVC startup project will call `services.AddInfrastructure(connectionString)` and register the Application services and `BookingPricingPolicy`. It must obtain `customerId` from the authenticated user claim, never a form field.
-
-## Run the website
-
-Set `ConnectionStrings:Catering` in `Web/appsettings.json` or the `CATERING_CONNECTION_STRING` environment variable to a working SQL Server database. Adjust `Pricing` in `Web/appsettings.json` for the desired loyalty discount and delivery fees. Apply the EF migrations, then run:
-
-```powershell
+$env:CATERING_CONNECTION_STRING = 'Server=DESKTOP-85J3V31;Database=CateringDevelopment;Trusted_Connection=True;TrustServerCertificate=True'
+dotnet ef database update --project Infrastructure/Infrastructure.csproj --startup-project Infrastructure/Infrastructure.csproj --context CateringDbContext
 dotnet run --project Web/Web.csproj
 ```
 
-The home page links to the booking form. Guests can submit requests; signed-in customers can also see their booking history. The booking confirmation shows the selected menu and price. A SQL Server database is required for registration, menu recommendations, and booking persistence. Add available menu items before making booking requests.
+The new migrations are `AddCuratedMenus` and `AddBookingCuratedMenuSnapshot`. An idempotent SQL script is at `Infrastructure/Persistence/Scripts/CuratedMenus.sql`. No curated menus are seeded: the homepage shows an empty state until an admin creates and publishes one.
+
+## Make an admin account
+
+1. Apply migrations and register your own account at `/Account/Register`.
+2. Set `GATHER_ADMIN_EMAIL` to that account's exact email address in the server environment.
+3. Restart the Web app. Startup creates the Admin role if needed and assigns it to the existing account.
+4. Sign out and sign in again, then visit `/admin/menus`.
+
+There is no default admin password. Keep `GATHER_ADMIN_EMAIL` under server control. Menu images are referenced by paths such as `/images/japanese-night.jpg`; put those files in `Web/wwwroot/images` before publishing.
+
+## Verify features
+
+- **Homepage:** publish a menu in Admin, then reload `/`; its name, image, price, capacity, and included dishes should appear. Unpublished menus should not appear.
+- **Browsing:** visit `/Menus` and combine cuisine, vibe, and event filters. With no matches, the page should show an empty state.
+- **Details:** open a card and check the full dish list and serving quantities. A draft or deleted menu URL should return 404.
+- **Admin:** an anonymous visitor should be redirected to sign in; a signed-in non-admin should be denied. As Admin, create, edit, add/remove dishes, publish/unpublish, and delete a menu. Invalid prices, guest ranges, paths, and empty dish lists should be rejected.
+- **Booking:** select a published menu at `/Bookings/Create`. The price comes from the database, and the confirmation lists that menu's dishes.
+
+The older `MenuItems` table remains for compatibility with existing database data. The automatic dish-combination service is no longer used by the website.
