@@ -1,0 +1,75 @@
+@model Web.Models.BookingForm
+@using Domain
+@{
+    ViewData["Title"] = "Plan your event";
+}
+
+<div class="page-heading">
+    <p class="eyebrow">Catering request</p>
+    <h1>Plan your event</h1>
+    <p>Tell us what you need. We will choose a menu that fits your preferences and food budget.</p>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data" class="booking-form">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <fieldset>
+        <legend>Event and menu</legend>
+        <div class="form-grid">
+            <div><label asp-for="EventType">Event type</label><select asp-for="EventType" asp-items="Html.GetEnumSelectList<EventType>()"></select></div>
+            <div><label asp-for="EventDate">Event date and time</label><input asp-for="EventDate" type="datetime-local" /><span asp-validation-for="EventDate"></span></div>
+            <div><label asp-for="Cuisine"></label><select asp-for="Cuisine" asp-items="Html.GetEnumSelectList<Cuisine>()"></select></div>
+            <div><label asp-for="DietaryPreference">Diet</label><select asp-for="DietaryPreference" asp-items="Html.GetEnumSelectList<DietaryPreference>()"></select></div>
+            <div><label asp-for="Taste"></label><select asp-for="Taste" asp-items="Html.GetEnumSelectList<TastePreference>()"></select></div>
+            <div><label asp-for="Mood"></label><select asp-for="Mood" asp-items="Html.GetEnumSelectList<Mood>()"></select></div>
+            <div><label asp-for="GuestCount">Guests</label><input asp-for="GuestCount" type="number" min="1" /><span asp-validation-for="GuestCount"></span></div>
+            <div><label asp-for="BudgetPerGuest">Food budget per guest</label><input asp-for="BudgetPerGuest" type="number" min="0.01" step="0.01" /><span asp-validation-for="BudgetPerGuest"></span></div>
+            <div><label asp-for="Currency"></label><input asp-for="Currency" maxlength="3" /><span asp-validation-for="Currency"></span></div>
+        </div>
+    </fieldset>
+
+    <fieldset id="cake-fields">
+        <legend>Birthday cake inspiration</legend>
+        <p>Optional: describe the cake or upload a reference photo.</p>
+        <label asp-for="CakeDescription">Cake description</label>
+        <textarea asp-for="CakeDescription" rows="4" maxlength="1000"></textarea>
+        <span asp-validation-for="CakeDescription"></span>
+        <label asp-for="CakeImage">Cake photo (JPEG, PNG, or WebP, up to 5 MB)</label>
+        <input asp-for="CakeImage" type="file" accept="image/jpeg,image/png,image/webp" />
+        <span asp-validation-for="CakeImage"></span>
+    </fieldset>
+
+    <fieldset>
+        <legend>Contact and fulfillment</legend>
+        <div class="form-grid">
+            <div><label asp-for="CustomerName">Your name</label><input asp-for="CustomerName" /><span asp-validation-for="CustomerName"></span></div>
+            <div><label asp-for="CustomerEmail">Email</label><input asp-for="CustomerEmail" type="email" /><span asp-validation-for="CustomerEmail"></span></div>
+            <div><label asp-for="CustomerPhone">Phone</label><input asp-for="CustomerPhone" type="tel" /><span asp-validation-for="CustomerPhone"></span></div>
+            <div><label asp-for="FulfillmentMethod">Fulfillment</label><select asp-for="FulfillmentMethod" asp-items="Html.GetEnumSelectList<FulfillmentMethod>()"></select></div>
+        </div>
+        <div id="delivery-fields"><label asp-for="DeliveryAddress">Delivery address</label><textarea asp-for="DeliveryAddress" rows="3"></textarea><span asp-validation-for="DeliveryAddress"></span></div>
+    </fieldset>
+
+    <input asp-for="TimezoneOffsetMinutes" type="hidden" />
+    <button type="submit" class="btn btn-primary">Request booking</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const eventType = document.getElementById('EventType');
+        const fulfillment = document.getElementById('FulfillmentMethod');
+        const updateFields = () => {
+            const birthday = eventType.value === '@((int)EventType.Birthday)';
+            const delivery = fulfillment.value === '@((int)FulfillmentMethod.Delivery)';
+            document.getElementById('cake-fields').hidden = !birthday;
+            document.getElementById('CakeDescription').disabled = !birthday;
+            document.getElementById('CakeImage').disabled = !birthday;
+            document.getElementById('delivery-fields').hidden = !delivery;
+            document.getElementById('DeliveryAddress').disabled = !delivery;
+        };
+        eventType.addEventListener('change', updateFields);
+        fulfillment.addEventListener('change', updateFields);
+        document.getElementById('TimezoneOffsetMinutes').value = new Date().getTimezoneOffset();
+        updateFields();
+    </script>
+}

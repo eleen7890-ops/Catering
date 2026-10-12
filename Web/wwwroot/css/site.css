@@ -1,0 +1,34 @@
+:root { color-scheme: light; }
+html { font-size: 16px; }
+body { background: #faf7f2; color: #27231f; font-family: "Segoe UI", Arial, sans-serif; }
+a { color: #7b3f32; }
+.navbar-brand { font-family: Georgia, serif; font-size: 1.35rem; font-weight: bold; color: #7b3f32 !important; }
+.nav-button { border: 0; background: transparent; }
+.container { max-width: 1100px; }
+.hero { display: grid; grid-template-columns: 1.2fr .8fr; gap: 3rem; align-items: center; padding: 5rem 0; }
+.hero h1, .page-heading h1 { font-family: Georgia, serif; font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: 1.06; margin: .5rem 0 1.5rem; }
+.hero p, .page-heading p { max-width: 48rem; font-size: 1.1rem; line-height: 1.7; }
+.eyebrow { text-transform: uppercase; letter-spacing: .16em; color: #a05b42; font-weight: 700; font-size: .8rem !important; }
+.hero-art { aspect-ratio: 1; border-radius: 50% 50% 45% 45%; background: radial-gradient(circle at 65% 35%, #e7aa86, transparent 35%), linear-gradient(145deg, #8b513a, #c87e62 65%, #e8b88f); display: grid; place-items: center; color: #fff8ee; font-family: Georgia, serif; font-style: italic; font-size: clamp(2rem, 5vw, 4rem); text-align: center; transform: rotate(-5deg); }
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; padding: 2rem 0 5rem; }
+.features h2, fieldset legend, .card-panel h2 { font-family: Georgia, serif; font-size: 1.5rem; }
+.features p { line-height: 1.6; }
+.page-heading { padding: 2rem 0; }
+.booking-form, .account-form { max-width: 850px; }
+fieldset, .card-panel { background: #fff; border: 1px solid #e8ded3; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+fieldset legend { float: none; width: auto; padding: 0 .4rem; }
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; }
+label { display: block; font-weight: 600; margin: .8rem 0 .35rem; }
+input:not([type="checkbox"]):not([type="file"]), select, textarea { display: block; width: 100%; padding: .65rem .75rem; border: 1px solid #c9bbae; border-radius: 7px; background: #fff; }
+input[type="file"] { display: block; width: 100%; }
+.checkbox { display: flex; align-items: center; gap: .5rem; }
+.btn-primary { background: #7b3f32; border-color: #7b3f32; padding: .75rem 1.5rem; }
+.btn-primary:hover { background: #613226; border-color: #613226; }
+.field-validation-error, .validation-summary-errors { color: #a12626; display: block; }
+.account-form { max-width: 440px; background: #fff; border: 1px solid #e8ded3; padding: 1.5rem; border-radius: 12px; }
+.account-form button { margin-top: 1.5rem; }
+.card-panel { max-width: 850px; }
+.menu-list { padding-left: 1.2rem; line-height: 1.8; }
+.total { font-weight: 700; font-size: 1.2rem; }
+[hidden] { display: none !important; }
+@media (max-width: 700px) { .hero, .features, .form-grid { grid-template-columns: 1fr; } .hero { padding: 2rem 0; } .hero-art { max-width: 320px; } }

@@ -1,0 +1,11 @@
+@model Web.Models.LoginForm
+@{ ViewData["Title"] = "Sign in"; }
+<div class="page-heading"><p class="eyebrow">Your account</p><h1>Sign in</h1></div>
+<form asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post" class="account-form">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <label asp-for="Email"></label><input asp-for="Email" type="email" /><span asp-validation-for="Email"></span>
+    <label asp-for="Password"></label><input asp-for="Password" type="password" /><span asp-validation-for="Password"></span>
+    <label class="checkbox"><input asp-for="RememberMe" /> Remember me</label>
+    <button type="submit" class="btn btn-primary">Sign in</button>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
